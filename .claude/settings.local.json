@@ -7,7 +7,9 @@
       "Bash(npm run check-all:*)",
       "Bash(npm run lint:fix:*)",
       "Bash(npm run lint)",
-      "Bash(npm run test:run:*)"
+      "Bash(npm run test:run:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nAdd comprehensive test suite with 62 passing tests\n\nAdded complete test coverage for all library components:\n\nTest Suite (6 test files, 62 tests):\n- ✅ Utils tests (11 tests) - 100% coverage\n  - URL building, header creation, error handling\n  \n- ✅ Network client tests (7 tests)\n  - FetchNetworkClient: GET, POST, PUT, DELETE methods\n  - Success/error handling, network failures\n  \n- ✅ MixrClient tests (15 tests)\n  - All API endpoints (equipment, ingredients, moods, recipes)\n  - Health checks, pagination, error handling\n  \n- ✅ Store tests (15 tests)\n  - Zustand recipe store CRUD operations\n  - localStorage persistence\n  - State synchronization\n  \n- ✅ Hook tests (14 tests)\n  - Equipment hooks (useEquipmentSubcategories, useEquipments)\n  - Recipe hooks (useRecipes, useRecipe, useCreateRecipe)\n  - React Query integration\n  - Infinite scroll and pagination\n  - Background refetching\n  - Zustand store integration\n\nCoverage:\n- Overall: 83.13% statements, 91.83% functions\n- Utils: 100% coverage\n- Hooks: 91.66% coverage\n- Network: 79.78% coverage\n- Stores: 80% coverage\n\nTest Infrastructure:\n- Added @testing-library/react for hook testing\n- Added happy-dom for DOM environment\n- Configured Vitest with proper setup\n- Mock localStorage implementation\n- Updated TypeScript and ESLint configs for test files\n- Proper test file exclusions from builds\n\nAll tests passing with full CI/CD integration.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []

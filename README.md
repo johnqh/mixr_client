@@ -8,6 +8,14 @@ TypeScript client library for the MIXR API - A cocktail recipe management system
 npm install @sudobility/mixr_client @sudobility/types @sudobility/di
 ```
 
+### For React Applications
+
+If using React hooks:
+
+```bash
+npm install @sudobility/mixr_client @tanstack/react-query react zustand
+```
+
 ## Features
 
 - Full TypeScript support with type definitions
@@ -18,6 +26,9 @@ npm install @sudobility/mixr_client @sudobility/types @sudobility/di
   - Mood management
   - Recipe generation and retrieval
   - Health check endpoints
+- React hooks with React Query for data fetching and caching
+- Zustand store for local state management and persistence
+- Automatic data synchronization between hooks
 
 ## Quick Start
 
@@ -159,6 +170,51 @@ try {
 }
 ```
 
+## React Hooks
+
+This library provides React hooks for easy integration with React applications. See [HOOKS.md](./HOOKS.md) for detailed documentation.
+
+### Available Hooks
+
+- **Equipment**: `useEquipmentSubcategories()`, `useEquipments(subcategory)`
+- **Ingredients**: `useIngredientSubcategories()`, `useIngredients(subcategory)`
+- **Moods**: `useMoods()`
+- **Recipes**: `useRecipes(limit)`, `useRecipe(recipeId)`, `useCreateRecipe()`
+
+### Quick Example
+
+```typescript
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MixrClient, FetchNetworkClient, useRecipes } from '@sudobility/mixr_client';
+
+const queryClient = new QueryClient();
+const networkClient = new FetchNetworkClient();
+const mixrClient = new MixrClient('http://localhost:3000', networkClient);
+
+function RecipeList() {
+  const { data, fetchNextPage, hasNextPage } = useRecipes(mixrClient, 10);
+
+  return (
+    <div>
+      {data?.pages.map((page) =>
+        page.recipes.map((recipe) => (
+          <div key={recipe.id}>{recipe.name}</div>
+        ))
+      )}
+      {hasNextPage && <button onClick={() => fetchNextPage()}>Load More</button>}
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <RecipeList />
+    </QueryClientProvider>
+  );
+}
+```
+
 ## Development
 
 ```bash
@@ -177,6 +233,11 @@ npm run lint
 # Format code
 npm run format
 ```
+
+## Documentation
+
+- [API Reference](./README.md) - Basic API client usage
+- [React Hooks](./HOOKS.md) - Detailed React hooks documentation
 
 ## License
 

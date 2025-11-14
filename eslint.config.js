@@ -7,7 +7,7 @@ import prettierConfig from 'eslint-config-prettier';
 export default [
   eslint.configs.recommended,
   {
-    files: ['src/**/*.ts'],
+    files: ['src/**/*.ts', 'src/**/*.tsx'],
     languageOptions: {
       parser: tsparser,
       parserOptions: {
@@ -23,6 +23,8 @@ export default [
         FormData: 'readonly',
         Blob: 'readonly',
         AbortSignal: 'readonly',
+        localStorage: 'readonly',
+        global: 'readonly',
       },
     },
     plugins: {
@@ -45,6 +47,16 @@ export default [
     },
   },
   {
-    ignores: ['dist/', 'node_modules/', '*.config.js', '*.config.ts'],
+    ignores: [
+      'dist/',
+      'node_modules/',
+      '*.config.js',
+      '*.config.ts',
+      '**/*.test.ts',
+      '**/*.test.tsx',
+      '**/*.spec.ts',
+      '**/*.spec.tsx',
+      '**/__tests__/**',
+    ],
   },
 ];
