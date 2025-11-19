@@ -16,11 +16,20 @@ export function buildUrl(baseUrl: string, path: string): string {
 /**
  * Create standard headers for requests
  */
-export function createHeaders(additionalHeaders?: Record<string, string>): Record<string, string> {
-  return {
+export function createHeaders(
+  additionalHeaders?: Record<string, string>,
+  authToken?: string
+): Record<string, string> {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...additionalHeaders,
   };
+
+  if (authToken) {
+    headers['Authorization'] = `Bearer ${authToken}`;
+  }
+
+  return headers;
 }
 
 /**

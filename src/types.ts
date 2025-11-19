@@ -121,3 +121,104 @@ export interface VersionResponse {
   message: string;
   version: string;
 }
+
+/**
+ * User types
+ */
+export interface User {
+  id: string;
+  email: string;
+  display_name: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UpdateUserRequest {
+  display_name: string;
+}
+
+export type UserResponse = MixrApiResponse<User>;
+
+/**
+ * User preferences types
+ */
+export interface UserPreferences {
+  equipment_ids: number[];
+  ingredient_ids: number[];
+  updated_at: string;
+}
+
+export interface UpdateUserPreferencesRequest {
+  equipment_ids: number[];
+  ingredient_ids: number[];
+}
+
+export type UserPreferencesResponse = MixrApiResponse<UserPreferences>;
+
+/**
+ * User favorites types
+ */
+export interface AddFavoriteRequest {
+  recipe_id: number;
+}
+
+export interface AddFavoriteResponse {
+  success: boolean;
+  message: string;
+}
+
+export interface RemoveFavoriteResponse {
+  success: boolean;
+  message: string;
+}
+
+/**
+ * Recipe rating types
+ */
+export interface RecipeRating {
+  id: number;
+  recipe_id: number;
+  user_id: string;
+  user_name: string;
+  user_email: string;
+  stars: number;
+  review: Optional<string>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SubmitRatingRequest {
+  stars: number;
+  review?: string;
+}
+
+export interface RatingAggregate {
+  recipe_id: number;
+  average_rating: number;
+  total_ratings: number;
+  rating_distribution: {
+    '1': number;
+    '2': number;
+    '3': number;
+    '4': number;
+    '5': number;
+  };
+}
+
+export interface RatingListParams {
+  limit?: number;
+  offset?: number;
+  sort?: 'newest' | 'oldest' | 'highest' | 'lowest';
+}
+
+export type RecipeRatingResponse = MixrApiResponse<RecipeRating>;
+export type RecipeRatingListResponse = MixrApiResponse<RecipeRating[]>;
+export type RatingAggregateResponse = MixrApiResponse<RatingAggregate>;
+export type DeleteRatingResponse = MixrApiResponse<{ message: string }>;
+
+/**
+ * Recipe userId field
+ */
+export interface RecipeWithUser extends Recipe {
+  userId: Optional<string>;
+}

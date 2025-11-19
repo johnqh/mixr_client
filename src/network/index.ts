@@ -4,4 +4,4 @@
 
 export { MixrClient } from './MixrClient';
 export { FetchNetworkClient } from './FetchNetworkClient';
-export type { RecipeListParams } from './MixrClient';
+export type { MixrClientConfig, RecipeListParams } from './MixrClient';
