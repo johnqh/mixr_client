@@ -6,8 +6,9 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useRecipes, useRecipe, useCreateRecipe } from '../../hooks/useRecipes';
-import { useRecipeStore } from '../../stores/recipeStore';
+import { createRecipeStore } from '../../stores/recipeStore';
 import { MixrClient } from '../../network/MixrClient';
+import type { PlatformStorage } from '@sudobility/di';
 import type { NetworkClient } from '@sudobility/types';
 import type { Recipe } from '../../types';
 import React from 'react';
@@ -16,6 +17,8 @@ describe('Recipe Hooks', () => {
   let queryClient: QueryClient;
   let mockNetworkClient: NetworkClient;
   let mixrClient: MixrClient;
+  let mockStorage: PlatformStorage;
+  let useRecipeStore: ReturnType<typeof createRecipeStore>;
 
   const mockRecipe: Recipe = {
     id: 1,
@@ -46,8 +49,25 @@ describe('Recipe Hooks', () => {
 
     mixrClient = new MixrClient('http://localhost:3000', mockNetworkClient);
 
-    // Clear store before each test
-    useRecipeStore.getState().clear();
+    // Create mock storage
+    const store: Record<string, string> = {};
+    mockStorage = {
+      getItem: (key: string) => store[key] ?? null,
+      setItem: (key: string, value: string) => {
+        store[key] = value;
+      },
+      removeItem: (key: string) => {
+        delete store[key];
+      },
+      clear: () => {
+        for (const key of Object.keys(store)) {
+          delete store[key];
+        }
+      },
+    };
+
+    // Create recipe store with mock storage
+    useRecipeStore = createRecipeStore(mockStorage, 'test-recipe-storage');
   });
 
   afterEach(() => {
@@ -72,7 +92,7 @@ describe('Recipe Hooks', () => {
         timestamp: new Date().toISOString(),
       });
 
-      const { result } = renderHook(() => useRecipes(mixrClient, 10), { wrapper });
+      const { result } = renderHook(() => useRecipes(mixrClient, useRecipeStore, 10), { wrapper });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -92,7 +112,7 @@ describe('Recipe Hooks', () => {
         timestamp: new Date().toISOString(),
       });
 
-      const { result } = renderHook(() => useRecipes(mixrClient, 10), { wrapper });
+      const { result } = renderHook(() => useRecipes(mixrClient, useRecipeStore, 10), { wrapper });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -124,7 +144,7 @@ describe('Recipe Hooks', () => {
           timestamp: new Date().toISOString(),
         });
 
-      const { result } = renderHook(() => useRecipes(mixrClient, 1), { wrapper });
+      const { result } = renderHook(() => useRecipes(mixrClient, useRecipeStore, 1), { wrapper });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -152,7 +172,7 @@ describe('Recipe Hooks', () => {
         timestamp: new Date().toISOString(),
       });
 
-      const { result } = renderHook(() => useRecipe(mixrClient, 1), { wrapper });
+      const { result } = renderHook(() => useRecipe(mixrClient, useRecipeStore, 1), { wrapper });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -173,7 +193,7 @@ describe('Recipe Hooks', () => {
         timestamp: new Date().toISOString(),
       });
 
-      const { result } = renderHook(() => useRecipe(mixrClient, 1), { wrapper });
+      const { result } = renderHook(() => useRecipe(mixrClient, useRecipeStore, 1), { wrapper });
 
       // Should have placeholder data immediately
       expect(result.current.data).toEqual(mockRecipe);
@@ -193,7 +213,7 @@ describe('Recipe Hooks', () => {
         timestamp: new Date().toISOString(),
       });
 
-      const { result } = renderHook(() => useRecipe(mixrClient, 1), { wrapper });
+      const { result } = renderHook(() => useRecipe(mixrClient, useRecipeStore, 1), { wrapper });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -202,7 +222,7 @@ describe('Recipe Hooks', () => {
     });
 
     it('should not fetch when recipeId is null', () => {
-      const { result } = renderHook(() => useRecipe(mixrClient, null), { wrapper });
+      const { result } = renderHook(() => useRecipe(mixrClient, useRecipeStore, null), { wrapper });
 
       expect(result.current.isPending).toBe(true);
       expect(result.current.fetchStatus).toBe('idle');
@@ -222,7 +242,7 @@ describe('Recipe Hooks', () => {
         timestamp: new Date().toISOString(),
       });
 
-      const { result } = renderHook(() => useCreateRecipe(mixrClient), { wrapper });
+      const { result } = renderHook(() => useCreateRecipe(mixrClient, useRecipeStore), { wrapper });
 
       result.current.mutate({
         equipment_ids: [1, 2],
@@ -246,7 +266,7 @@ describe('Recipe Hooks', () => {
         timestamp: new Date().toISOString(),
       });
 
-      const { result } = renderHook(() => useCreateRecipe(mixrClient), { wrapper });
+      const { result } = renderHook(() => useCreateRecipe(mixrClient, useRecipeStore), { wrapper });
 
       result.current.mutate({
         equipment_ids: [1, 2],
@@ -273,7 +293,7 @@ describe('Recipe Hooks', () => {
 
       const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
 
-      const { result } = renderHook(() => useCreateRecipe(mixrClient), { wrapper });
+      const { result } = renderHook(() => useCreateRecipe(mixrClient, useRecipeStore), { wrapper });
 
       result.current.mutate({
         equipment_ids: [1, 2],

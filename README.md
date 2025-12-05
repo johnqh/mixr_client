@@ -33,10 +33,12 @@ npm install @sudobility/mixr_client @tanstack/react-query react zustand
 ## Quick Start
 
 ```typescript
-import { MixrClient, FetchNetworkClient } from '@sudobility/mixr_client';
+import { MixrClient } from '@sudobility/mixr_client';
+import type { NetworkClient } from '@sudobility/types';
 
-// Initialize the client
-const networkClient = new FetchNetworkClient();
+// The consumer provides their own NetworkClient implementation
+// (e.g., from @sudobility/di or a custom implementation)
+const networkClient: NetworkClient = /* your network client */;
 const client = new MixrClient('http://localhost:3000', networkClient);
 
 // Health check
@@ -185,10 +187,11 @@ This library provides React hooks for easy integration with React applications. 
 
 ```typescript
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { MixrClient, FetchNetworkClient, useRecipes } from '@sudobility/mixr_client';
+import { MixrClient, useRecipes } from '@sudobility/mixr_client';
+import type { NetworkClient } from '@sudobility/types';
 
 const queryClient = new QueryClient();
-const networkClient = new FetchNetworkClient();
+const networkClient: NetworkClient = /* your network client */;
 const mixrClient = new MixrClient('http://localhost:3000', networkClient);
 
 function RecipeList() {

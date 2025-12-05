@@ -2,4 +2,4 @@
  * Store exports
  */
 
-export { useRecipeStore } from './recipeStore';
+export { createRecipeStore, type RecipeStore, type RecipeStoreApi } from './recipeStore';

@@ -1,17 +1,27 @@
 /**
  * Recipe-related React hooks with Zustand integration
+ * React Native compatible - accepts store from DI
  */
 
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
-import { useRecipeStore } from '../stores/recipeStore';
 import type { MixrClient } from '../network/MixrClient';
 import type { GenerateRecipeRequest, Recipe } from '../types';
+import type { RecipeStore } from '../stores/recipeStore';
+
+/**
+ * Type for the recipe store hook returned by createRecipeStore
+ */
+export type UseRecipeStore = () => RecipeStore;
 
 /**
  * Hook to get recipes with pagination
  * Integrates with Zustand store for local caching
+ *
+ * @param client - MixrClient instance for API calls
+ * @param useRecipeStore - Recipe store hook from createRecipeStore
+ * @param limit - Number of recipes per page (default: 10)
  */
-export function useRecipes(client: MixrClient, limit: number = 10) {
+export function useRecipes(client: MixrClient, useRecipeStore: UseRecipeStore, limit: number = 10) {
   const { setRecipes } = useRecipeStore();
 
   return useInfiniteQuery({
@@ -43,8 +53,16 @@ export function useRecipes(client: MixrClient, limit: number = 10) {
 /**
  * Hook to get a single recipe by ID
  * Returns local data immediately if available, refetches in background
+ *
+ * @param client - MixrClient instance for API calls
+ * @param useRecipeStore - Recipe store hook from createRecipeStore
+ * @param recipeId - Recipe ID to fetch
  */
-export function useRecipe(client: MixrClient, recipeId: number | null | undefined) {
+export function useRecipe(
+  client: MixrClient,
+  useRecipeStore: UseRecipeStore,
+  recipeId: number | null | undefined
+) {
   const { getRecipe, hasRecipe, setRecipe } = useRecipeStore();
 
   // Get placeholder data if available
@@ -79,8 +97,11 @@ export function useRecipe(client: MixrClient, recipeId: number | null | undefine
 /**
  * Hook to create a new recipe
  * Updates Zustand store with the created recipe
+ *
+ * @param client - MixrClient instance for API calls
+ * @param useRecipeStore - Recipe store hook from createRecipeStore
  */
-export function useCreateRecipe(client: MixrClient) {
+export function useCreateRecipe(client: MixrClient, useRecipeStore: UseRecipeStore) {
   const { setRecipe } = useRecipeStore();
   const queryClient = useQueryClient();
 

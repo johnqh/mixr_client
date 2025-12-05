@@ -5,4 +5,4 @@
 export { useEquipmentSubcategories, useEquipments } from './useEquipment';
 export { useIngredientSubcategories, useIngredients } from './useIngredients';
 export { useMoods } from './useMoods';
-export { useRecipes, useRecipe, useCreateRecipe } from './useRecipes';
+export { useRecipes, useRecipe, useCreateRecipe, type UseRecipeStore } from './useRecipes';

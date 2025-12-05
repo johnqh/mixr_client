@@ -25,10 +25,12 @@ Wrap your app with the `QueryClientProvider`:
 
 ```typescript
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { MixrClient, FetchNetworkClient } from '@sudobility/mixr_client';
+import { MixrClient } from '@sudobility/mixr_client';
+import type { NetworkClient } from '@sudobility/types';
 
 const queryClient = new QueryClient();
-const networkClient = new FetchNetworkClient();
+// The consumer provides their own NetworkClient implementation
+const networkClient: NetworkClient = /* your network client */;
 const mixrClient = new MixrClient('http://localhost:3000', networkClient);
 
 function App() {

@@ -3,14 +3,34 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { useRecipeStore } from '../../stores/recipeStore';
+import { createRecipeStore } from '../../stores/recipeStore';
+import type { PlatformStorage } from '@sudobility/di';
 import type { Recipe } from '../../types';
 
 describe('RecipeStore', () => {
+  let mockStorage: PlatformStorage;
+  let useRecipeStore: ReturnType<typeof createRecipeStore>;
+
   beforeEach(() => {
-    // Clear the store before each test
-    useRecipeStore.getState().clear();
-    localStorage.clear();
+    // Create a fresh mock storage for each test
+    const store: Record<string, string> = {};
+    mockStorage = {
+      getItem: (key: string) => store[key] ?? null,
+      setItem: (key: string, value: string) => {
+        store[key] = value;
+      },
+      removeItem: (key: string) => {
+        delete store[key];
+      },
+      clear: () => {
+        for (const key of Object.keys(store)) {
+          delete store[key];
+        }
+      },
+    };
+
+    // Create a fresh store for each test
+    useRecipeStore = createRecipeStore(mockStorage, 'test-recipe-storage');
   });
 
   const mockRecipe: Recipe = {
@@ -57,7 +77,7 @@ describe('RecipeStore', () => {
     });
 
     it('should add recipe to recipeList', () => {
-      const { setRecipe, recipeList } = useRecipeStore.getState();
+      const { setRecipe } = useRecipeStore.getState();
 
       setRecipe(mockRecipe);
 
@@ -171,35 +191,16 @@ describe('RecipeStore', () => {
     });
   });
 
-  describe('localStorage persistence', () => {
-    it('should persist recipes to localStorage', () => {
+  describe('storage persistence', () => {
+    it('should persist recipes to storage', async () => {
       const { setRecipe } = useRecipeStore.getState();
 
       setRecipe(mockRecipe);
 
-      const stored = localStorage.getItem('mixr-recipe-storage');
-      expect(stored).toBeTruthy();
-    });
+      // Wait for async storage operation
+      await new Promise((resolve) => setTimeout(resolve, 50));
 
-    it('should restore recipes from localStorage', () => {
-      const { setRecipe, clear } = useRecipeStore.getState();
-
-      // Add recipe and store it
-      setRecipe(mockRecipe);
-
-      // Clear in-memory state
-      clear();
-
-      // Verify it was cleared
-      expect(useRecipeStore.getState().recipes.size).toBe(0);
-
-      // Create new store instance (simulating page reload)
-      // This should restore from localStorage
-      const restoredStore = useRecipeStore.getState();
-
-      // Note: In a real scenario, the store would automatically restore from localStorage
-      // For testing, we verify that localStorage has the data
-      const stored = localStorage.getItem('mixr-recipe-storage');
+      const stored = mockStorage.getItem('test-recipe-storage');
       expect(stored).toBeTruthy();
     });
   });
