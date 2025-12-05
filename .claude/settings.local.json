@@ -13,7 +13,8 @@
       "Bash(tree:*)",
       "Bash(cat:*)",
       "Bash(rm:*)",
-      "Bash(git commit -m \"$(cat <<''EOF''\nRemove FetchNetworkClient - consumer provides NetworkClient via DI\n\n- Deleted src/network/FetchNetworkClient.ts (concrete implementation)\n- Deleted src/__tests__/network/FetchNetworkClient.test.ts\n- Deleted example.ts\n- Updated src/network/index.ts to remove export\n- Updated README.md and HOOKS.md documentation to show consumer\n  provides their own NetworkClient implementation\n- Updated recipe store and hooks for better DI pattern\n\nThe NetworkClient interface from @sudobility/types should be\nimplemented by the consuming application, not bundled with this library.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+      "Bash(git commit -m \"$(cat <<''EOF''\nRemove FetchNetworkClient - consumer provides NetworkClient via DI\n\n- Deleted src/network/FetchNetworkClient.ts (concrete implementation)\n- Deleted src/__tests__/network/FetchNetworkClient.test.ts\n- Deleted example.ts\n- Updated src/network/index.ts to remove export\n- Updated README.md and HOOKS.md documentation to show consumer\n  provides their own NetworkClient implementation\n- Updated recipe store and hooks for better DI pattern\n\nThe NetworkClient interface from @sudobility/types should be\nimplemented by the consuming application, not bundled with this library.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

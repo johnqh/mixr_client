@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { MixrClient } from '../../network/MixrClient';
+import { MixrClient } from '../../network/mixr-client';
 import type { NetworkClient, NetworkResponse } from '@sudobility/types';
 import type { Equipment, Ingredient, Mood, Recipe } from '../../types';
 

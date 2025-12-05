@@ -2,5 +2,5 @@
  * Network layer exports
  */
 
-export { MixrClient } from './MixrClient';
-export type { MixrClientConfig, RecipeListParams } from './MixrClient';
+export { MixrClient } from './mixr-client';
+export type { MixrClientConfig, RecipeListParams } from './mixr-client';

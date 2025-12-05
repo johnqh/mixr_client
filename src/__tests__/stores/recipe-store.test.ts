@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { createRecipeStore } from '../../stores/recipeStore';
+import { createRecipeStore } from '../../stores/recipe-store';
 import type { PlatformStorage } from '@sudobility/di';
 import type { Recipe } from '../../types';
 
