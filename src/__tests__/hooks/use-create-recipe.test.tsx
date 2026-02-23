@@ -151,7 +151,7 @@ describe('useCreateRecipe', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(invalidateSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ queryKey: ['recipes', 'list'] })
+      expect.objectContaining({ queryKey: ['recipes'] })
     );
   });
 });

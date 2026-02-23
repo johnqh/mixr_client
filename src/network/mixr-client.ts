@@ -53,8 +53,20 @@ export interface MixrClientConfig {
   authToken?: string;
 }
 
+/** HTTP method type for the internal request helper */
+type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
+
 /**
  * MIXR API client for cocktail recipe management
+ *
+ * Provides type-safe methods for all MIXR API endpoints including
+ * equipment, ingredients, moods, recipes, ratings, users, and favorites.
+ *
+ * @example
+ * ```typescript
+ * const client = new MixrClient({ baseUrl: 'https://api.mixr.app', networkClient });
+ * const equipment = await client.getEquipment();
+ * ```
  */
 export class MixrClient {
   private readonly baseUrl: string;
@@ -94,6 +106,68 @@ export class MixrClient {
   }
 
   // =============================================================================
+  // PRIVATE HELPERS
+  // =============================================================================
+
+  /**
+   * Build URL search params from a record of optional values.
+   * Omits undefined values from the query string.
+   */
+  private buildQueryString(params: Record<string, string | number | undefined>): string {
+    const searchParams = new URLSearchParams();
+    for (const [key, value] of Object.entries(params)) {
+      if (value !== undefined) {
+        searchParams.append(key, value.toString());
+      }
+    }
+    const qs = searchParams.toString();
+    return qs ? `?${qs}` : '';
+  }
+
+  /**
+   * Internal helper that sends an HTTP request, checks for errors, and returns the typed response data.
+   * Eliminates duplicated error-handling boilerplate across all public methods.
+   *
+   * @param method - HTTP method
+   * @param path - API path (appended to baseUrl)
+   * @param operationName - Human-readable name used in error messages
+   * @param body - Optional request body for POST/PUT
+   * @returns The parsed response data
+   * @throws Error if the response is not ok or data is missing
+   */
+  private async request<T>(
+    method: HttpMethod,
+    path: string,
+    operationName: string,
+    body?: unknown
+  ): Promise<T> {
+    const headers = createHeaders({}, this.authToken);
+    const url = buildUrl(this.baseUrl, path);
+
+    let response;
+    switch (method) {
+      case 'GET':
+        response = await this.networkClient.get<T>(url, { headers });
+        break;
+      case 'POST':
+        response = await this.networkClient.post<T>(url, body, { headers });
+        break;
+      case 'PUT':
+        response = await this.networkClient.put<T>(url, body, { headers });
+        break;
+      case 'DELETE':
+        response = await this.networkClient.delete<T>(url, { headers });
+        break;
+    }
+
+    if (!response.ok || !response.data) {
+      throw handleApiError(response, operationName);
+    }
+
+    return response.data;
+  }
+
+  // =============================================================================
   // HEALTH CHECK ENDPOINTS
   // =============================================================================
 
@@ -102,17 +176,7 @@ export class MixrClient {
    * GET /
    */
   async getVersion(): Promise<VersionResponse> {
-    const headers = createHeaders({}, this.authToken);
-
-    const response = await this.networkClient.get<VersionResponse>(buildUrl(this.baseUrl, '/'), {
-      headers,
-    });
-
-    if (!response.ok || !response.data) {
-      throw handleApiError(response, 'get version');
-    }
-
-    return response.data;
+    return this.request<VersionResponse>('GET', '/', 'get version');
   }
 
   /**
@@ -120,18 +184,7 @@ export class MixrClient {
    * GET /health
    */
   async healthCheck(): Promise<HealthResponse> {
-    const headers = createHeaders({}, this.authToken);
-
-    const response = await this.networkClient.get<HealthResponse>(
-      buildUrl(this.baseUrl, '/health'),
-      { headers }
-    );
-
-    if (!response.ok || !response.data) {
-      throw handleApiError(response, 'health check');
-    }
-
-    return response.data;
+    return this.request<HealthResponse>('GET', '/health', 'health check');
   }
 
   // =============================================================================
@@ -143,19 +196,12 @@ export class MixrClient {
    * GET /api/equipment?subcategory=...
    */
   async getEquipment(subcategory?: EquipmentSubcategory): Promise<EquipmentListResponse> {
-    const headers = createHeaders({}, this.authToken);
-    const queryParams = subcategory ? `?subcategory=${encodeURIComponent(subcategory)}` : '';
-
-    const response = await this.networkClient.get<EquipmentListResponse>(
-      buildUrl(this.baseUrl, `/api/equipment${queryParams}`),
-      { headers }
+    const queryString = subcategory ? `?subcategory=${encodeURIComponent(subcategory)}` : '';
+    return this.request<EquipmentListResponse>(
+      'GET',
+      `/api/equipment${queryString}`,
+      'get equipment'
     );
-
-    if (!response.ok || !response.data) {
-      throw handleApiError(response, 'get equipment');
-    }
-
-    return response.data;
   }
 
   /**
@@ -163,18 +209,7 @@ export class MixrClient {
    * GET /api/equipment/:id
    */
   async getEquipmentById(id: number): Promise<EquipmentResponse> {
-    const headers = createHeaders({}, this.authToken);
-
-    const response = await this.networkClient.get<EquipmentResponse>(
-      buildUrl(this.baseUrl, `/api/equipment/${id}`),
-      { headers }
-    );
-
-    if (!response.ok || !response.data) {
-      throw handleApiError(response, 'get equipment by id');
-    }
-
-    return response.data;
+    return this.request<EquipmentResponse>('GET', `/api/equipment/${id}`, 'get equipment by id');
   }
 
   /**
@@ -182,18 +217,11 @@ export class MixrClient {
    * GET /api/equipment/subcategories
    */
   async getEquipmentSubcategories(): Promise<EquipmentSubcategoriesResponse> {
-    const headers = createHeaders({}, this.authToken);
-
-    const response = await this.networkClient.get<EquipmentSubcategoriesResponse>(
-      buildUrl(this.baseUrl, '/api/equipment/subcategories'),
-      { headers }
+    return this.request<EquipmentSubcategoriesResponse>(
+      'GET',
+      '/api/equipment/subcategories',
+      'get equipment subcategories'
     );
-
-    if (!response.ok || !response.data) {
-      throw handleApiError(response, 'get equipment subcategories');
-    }
-
-    return response.data;
   }
 
   // =============================================================================
@@ -205,19 +233,12 @@ export class MixrClient {
    * GET /api/ingredients?subcategory=...
    */
   async getIngredients(subcategory?: IngredientSubcategory): Promise<IngredientListResponse> {
-    const headers = createHeaders({}, this.authToken);
-    const queryParams = subcategory ? `?subcategory=${encodeURIComponent(subcategory)}` : '';
-
-    const response = await this.networkClient.get<IngredientListResponse>(
-      buildUrl(this.baseUrl, `/api/ingredients${queryParams}`),
-      { headers }
+    const queryString = subcategory ? `?subcategory=${encodeURIComponent(subcategory)}` : '';
+    return this.request<IngredientListResponse>(
+      'GET',
+      `/api/ingredients${queryString}`,
+      'get ingredients'
     );
-
-    if (!response.ok || !response.data) {
-      throw handleApiError(response, 'get ingredients');
-    }
-
-    return response.data;
   }
 
   /**
@@ -225,18 +246,11 @@ export class MixrClient {
    * GET /api/ingredients/:id
    */
   async getIngredientById(id: number): Promise<IngredientResponse> {
-    const headers = createHeaders({}, this.authToken);
-
-    const response = await this.networkClient.get<IngredientResponse>(
-      buildUrl(this.baseUrl, `/api/ingredients/${id}`),
-      { headers }
+    return this.request<IngredientResponse>(
+      'GET',
+      `/api/ingredients/${id}`,
+      'get ingredient by id'
     );
-
-    if (!response.ok || !response.data) {
-      throw handleApiError(response, 'get ingredient by id');
-    }
-
-    return response.data;
   }
 
   /**
@@ -244,18 +258,11 @@ export class MixrClient {
    * GET /api/ingredients/subcategories
    */
   async getIngredientSubcategories(): Promise<IngredientSubcategoriesResponse> {
-    const headers = createHeaders({}, this.authToken);
-
-    const response = await this.networkClient.get<IngredientSubcategoriesResponse>(
-      buildUrl(this.baseUrl, '/api/ingredients/subcategories'),
-      { headers }
+    return this.request<IngredientSubcategoriesResponse>(
+      'GET',
+      '/api/ingredients/subcategories',
+      'get ingredient subcategories'
     );
-
-    if (!response.ok || !response.data) {
-      throw handleApiError(response, 'get ingredient subcategories');
-    }
-
-    return response.data;
   }
 
   // =============================================================================
@@ -267,18 +274,7 @@ export class MixrClient {
    * GET /api/moods
    */
   async getMoods(): Promise<MoodListResponse> {
-    const headers = createHeaders({}, this.authToken);
-
-    const response = await this.networkClient.get<MoodListResponse>(
-      buildUrl(this.baseUrl, '/api/moods'),
-      { headers }
-    );
-
-    if (!response.ok || !response.data) {
-      throw handleApiError(response, 'get moods');
-    }
-
-    return response.data;
+    return this.request<MoodListResponse>('GET', '/api/moods', 'get moods');
   }
 
   /**
@@ -286,18 +282,7 @@ export class MixrClient {
    * GET /api/moods/:id
    */
   async getMoodById(id: number): Promise<MoodResponse> {
-    const headers = createHeaders({}, this.authToken);
-
-    const response = await this.networkClient.get<MoodResponse>(
-      buildUrl(this.baseUrl, `/api/moods/${id}`),
-      { headers }
-    );
-
-    if (!response.ok || !response.data) {
-      throw handleApiError(response, 'get mood by id');
-    }
-
-    return response.data;
+    return this.request<MoodResponse>('GET', `/api/moods/${id}`, 'get mood by id');
   }
 
   // =============================================================================
@@ -309,19 +294,12 @@ export class MixrClient {
    * POST /api/recipes/generate
    */
   async generateRecipe(request: GenerateRecipeRequest): Promise<RecipeResponse> {
-    const headers = createHeaders({}, this.authToken);
-
-    const response = await this.networkClient.post<RecipeResponse>(
-      buildUrl(this.baseUrl, '/api/recipes/generate'),
-      request,
-      { headers }
+    return this.request<RecipeResponse>(
+      'POST',
+      '/api/recipes/generate',
+      'generate recipe',
+      request
     );
-
-    if (!response.ok || !response.data) {
-      throw handleApiError(response, 'generate recipe');
-    }
-
-    return response.data;
   }
 
   /**
@@ -329,31 +307,11 @@ export class MixrClient {
    * GET /api/recipes?limit=...&offset=...
    */
   async getRecipes(params?: RecipeListParams): Promise<RecipeListResponse> {
-    const headers = createHeaders({}, this.authToken);
-    const queryParams = new URLSearchParams();
-
-    if (params?.limit !== undefined) {
-      queryParams.append('limit', params.limit.toString());
-    }
-    if (params?.offset !== undefined) {
-      queryParams.append('offset', params.offset.toString());
-    }
-
-    const queryString = queryParams.toString();
-    const path = `/api/recipes${queryString ? `?${queryString}` : ''}`;
-
-    const response = await this.networkClient.get<RecipeListResponse>(
-      buildUrl(this.baseUrl, path),
-      {
-        headers,
-      }
-    );
-
-    if (!response.ok || !response.data) {
-      throw handleApiError(response, 'get recipes');
-    }
-
-    return response.data;
+    const qs = this.buildQueryString({
+      limit: params?.limit,
+      offset: params?.offset,
+    });
+    return this.request<RecipeListResponse>('GET', `/api/recipes${qs}`, 'get recipes');
   }
 
   /**
@@ -361,18 +319,7 @@ export class MixrClient {
    * GET /api/recipes/:id
    */
   async getRecipeById(id: number): Promise<RecipeResponse> {
-    const headers = createHeaders({}, this.authToken);
-
-    const response = await this.networkClient.get<RecipeResponse>(
-      buildUrl(this.baseUrl, `/api/recipes/${id}`),
-      { headers }
-    );
-
-    if (!response.ok || !response.data) {
-      throw handleApiError(response, 'get recipe by id');
-    }
-
-    return response.data;
+    return this.request<RecipeResponse>('GET', `/api/recipes/${id}`, 'get recipe by id');
   }
 
   // =============================================================================
@@ -385,18 +332,7 @@ export class MixrClient {
    * Requires authentication
    */
   async getCurrentUser(): Promise<UserResponse> {
-    const headers = createHeaders({}, this.authToken);
-
-    const response = await this.networkClient.get<UserResponse>(
-      buildUrl(this.baseUrl, '/api/users/me'),
-      { headers }
-    );
-
-    if (!response.ok || !response.data) {
-      throw handleApiError(response, 'get current user');
-    }
-
-    return response.data;
+    return this.request<UserResponse>('GET', '/api/users/me', 'get current user');
   }
 
   /**
@@ -405,19 +341,7 @@ export class MixrClient {
    * Requires authentication
    */
   async updateCurrentUser(request: UpdateUserRequest): Promise<UserResponse> {
-    const headers = createHeaders({}, this.authToken);
-
-    const response = await this.networkClient.put<UserResponse>(
-      buildUrl(this.baseUrl, '/api/users/me'),
-      request,
-      { headers }
-    );
-
-    if (!response.ok || !response.data) {
-      throw handleApiError(response, 'update current user');
-    }
-
-    return response.data;
+    return this.request<UserResponse>('PUT', '/api/users/me', 'update current user', request);
   }
 
   /**
@@ -426,18 +350,11 @@ export class MixrClient {
    * Requires authentication
    */
   async getUserPreferences(): Promise<UserPreferencesResponse> {
-    const headers = createHeaders({}, this.authToken);
-
-    const response = await this.networkClient.get<UserPreferencesResponse>(
-      buildUrl(this.baseUrl, '/api/users/me/preferences'),
-      { headers }
+    return this.request<UserPreferencesResponse>(
+      'GET',
+      '/api/users/me/preferences',
+      'get user preferences'
     );
-
-    if (!response.ok || !response.data) {
-      throw handleApiError(response, 'get user preferences');
-    }
-
-    return response.data;
   }
 
   /**
@@ -448,19 +365,12 @@ export class MixrClient {
   async updateUserPreferences(
     request: UpdateUserPreferencesRequest
   ): Promise<UserPreferencesResponse> {
-    const headers = createHeaders({}, this.authToken);
-
-    const response = await this.networkClient.put<UserPreferencesResponse>(
-      buildUrl(this.baseUrl, '/api/users/me/preferences'),
-      request,
-      { headers }
+    return this.request<UserPreferencesResponse>(
+      'PUT',
+      '/api/users/me/preferences',
+      'update user preferences',
+      request
     );
-
-    if (!response.ok || !response.data) {
-      throw handleApiError(response, 'update user preferences');
-    }
-
-    return response.data;
   }
 
   /**
@@ -469,31 +379,15 @@ export class MixrClient {
    * Requires authentication
    */
   async getUserRecipes(params?: RecipeListParams): Promise<RecipeListResponse> {
-    const headers = createHeaders({}, this.authToken);
-    const queryParams = new URLSearchParams();
-
-    if (params?.limit !== undefined) {
-      queryParams.append('limit', params.limit.toString());
-    }
-    if (params?.offset !== undefined) {
-      queryParams.append('offset', params.offset.toString());
-    }
-
-    const queryString = queryParams.toString();
-    const path = `/api/users/me/recipes${queryString ? `?${queryString}` : ''}`;
-
-    const response = await this.networkClient.get<RecipeListResponse>(
-      buildUrl(this.baseUrl, path),
-      {
-        headers,
-      }
+    const qs = this.buildQueryString({
+      limit: params?.limit,
+      offset: params?.offset,
+    });
+    return this.request<RecipeListResponse>(
+      'GET',
+      `/api/users/me/recipes${qs}`,
+      'get user recipes'
     );
-
-    if (!response.ok || !response.data) {
-      throw handleApiError(response, 'get user recipes');
-    }
-
-    return response.data;
   }
 
   /**
@@ -502,31 +396,15 @@ export class MixrClient {
    * Requires authentication
    */
   async getUserFavorites(params?: RecipeListParams): Promise<RecipeListResponse> {
-    const headers = createHeaders({}, this.authToken);
-    const queryParams = new URLSearchParams();
-
-    if (params?.limit !== undefined) {
-      queryParams.append('limit', params.limit.toString());
-    }
-    if (params?.offset !== undefined) {
-      queryParams.append('offset', params.offset.toString());
-    }
-
-    const queryString = queryParams.toString();
-    const path = `/api/users/me/favorites${queryString ? `?${queryString}` : ''}`;
-
-    const response = await this.networkClient.get<RecipeListResponse>(
-      buildUrl(this.baseUrl, path),
-      {
-        headers,
-      }
+    const qs = this.buildQueryString({
+      limit: params?.limit,
+      offset: params?.offset,
+    });
+    return this.request<RecipeListResponse>(
+      'GET',
+      `/api/users/me/favorites${qs}`,
+      'get user favorites'
     );
-
-    if (!response.ok || !response.data) {
-      throw handleApiError(response, 'get user favorites');
-    }
-
-    return response.data;
   }
 
   /**
@@ -535,19 +413,12 @@ export class MixrClient {
    * Requires authentication
    */
   async addFavorite(request: AddFavoriteRequest): Promise<AddFavoriteResponse> {
-    const headers = createHeaders({}, this.authToken);
-
-    const response = await this.networkClient.post<AddFavoriteResponse>(
-      buildUrl(this.baseUrl, '/api/users/me/favorites'),
-      request,
-      { headers }
+    return this.request<AddFavoriteResponse>(
+      'POST',
+      '/api/users/me/favorites',
+      'add favorite',
+      request
     );
-
-    if (!response.ok || !response.data) {
-      throw handleApiError(response, 'add favorite');
-    }
-
-    return response.data;
   }
 
   /**
@@ -556,18 +427,11 @@ export class MixrClient {
    * Requires authentication
    */
   async removeFavorite(recipeId: number): Promise<RemoveFavoriteResponse> {
-    const headers = createHeaders({}, this.authToken);
-
-    const response = await this.networkClient.delete<RemoveFavoriteResponse>(
-      buildUrl(this.baseUrl, `/api/users/me/favorites/${recipeId}`),
-      { headers }
+    return this.request<RemoveFavoriteResponse>(
+      'DELETE',
+      `/api/users/me/favorites/${recipeId}`,
+      'remove favorite'
     );
-
-    if (!response.ok || !response.data) {
-      throw handleApiError(response, 'remove favorite');
-    }
-
-    return response.data;
   }
 
   // =============================================================================
@@ -583,19 +447,12 @@ export class MixrClient {
     recipeId: number,
     request: SubmitRatingRequest
   ): Promise<RecipeRatingResponse> {
-    const headers = createHeaders({}, this.authToken);
-
-    const response = await this.networkClient.post<RecipeRatingResponse>(
-      buildUrl(this.baseUrl, `/api/recipes/${recipeId}/ratings`),
-      request,
-      { headers }
+    return this.request<RecipeRatingResponse>(
+      'POST',
+      `/api/recipes/${recipeId}/ratings`,
+      'submit recipe rating',
+      request
     );
-
-    if (!response.ok || !response.data) {
-      throw handleApiError(response, 'submit recipe rating');
-    }
-
-    return response.data;
   }
 
   /**
@@ -606,34 +463,16 @@ export class MixrClient {
     recipeId: number,
     params?: RatingListParams
   ): Promise<RecipeRatingListResponse> {
-    const headers = createHeaders({}, this.authToken);
-    const queryParams = new URLSearchParams();
-
-    if (params?.limit !== undefined) {
-      queryParams.append('limit', params.limit.toString());
-    }
-    if (params?.offset !== undefined) {
-      queryParams.append('offset', params.offset.toString());
-    }
-    if (params?.sort !== undefined) {
-      queryParams.append('sort', params.sort);
-    }
-
-    const queryString = queryParams.toString();
-    const path = `/api/recipes/${recipeId}/ratings${queryString ? `?${queryString}` : ''}`;
-
-    const response = await this.networkClient.get<RecipeRatingListResponse>(
-      buildUrl(this.baseUrl, path),
-      {
-        headers,
-      }
+    const qs = this.buildQueryString({
+      limit: params?.limit,
+      offset: params?.offset,
+      sort: params?.sort,
+    });
+    return this.request<RecipeRatingListResponse>(
+      'GET',
+      `/api/recipes/${recipeId}/ratings${qs}`,
+      'get recipe ratings'
     );
-
-    if (!response.ok || !response.data) {
-      throw handleApiError(response, 'get recipe ratings');
-    }
-
-    return response.data;
   }
 
   /**
@@ -641,18 +480,11 @@ export class MixrClient {
    * GET /api/recipes/:id/ratings/aggregate
    */
   async getRecipeRatingAggregate(recipeId: number): Promise<RatingAggregateResponse> {
-    const headers = createHeaders({}, this.authToken);
-
-    const response = await this.networkClient.get<RatingAggregateResponse>(
-      buildUrl(this.baseUrl, `/api/recipes/${recipeId}/ratings/aggregate`),
-      { headers }
+    return this.request<RatingAggregateResponse>(
+      'GET',
+      `/api/recipes/${recipeId}/ratings/aggregate`,
+      'get recipe rating aggregate'
     );
-
-    if (!response.ok || !response.data) {
-      throw handleApiError(response, 'get recipe rating aggregate');
-    }
-
-    return response.data;
   }
 
   /**
@@ -661,17 +493,10 @@ export class MixrClient {
    * Requires authentication
    */
   async deleteRecipeRating(recipeId: number, ratingId: number): Promise<DeleteRatingResponse> {
-    const headers = createHeaders({}, this.authToken);
-
-    const response = await this.networkClient.delete<DeleteRatingResponse>(
-      buildUrl(this.baseUrl, `/api/recipes/${recipeId}/ratings/${ratingId}`),
-      { headers }
+    return this.request<DeleteRatingResponse>(
+      'DELETE',
+      `/api/recipes/${recipeId}/ratings/${ratingId}`,
+      'delete recipe rating'
     );
-
-    if (!response.ok || !response.data) {
-      throw handleApiError(response, 'delete recipe rating');
-    }
-
-    return response.data;
   }
 }
