@@ -20,6 +20,7 @@ import type {
   IngredientSubcategory,
   MoodListResponse,
   MoodResponse,
+  PaginationQueryParams,
   RatingAggregateResponse,
   RatingListParams,
   RecipeListResponse,
@@ -38,11 +39,9 @@ import { buildUrl, createHeaders, handleApiError } from '../utils/helpers';
 
 /**
  * Query parameters for recipe list
+ * @deprecated Use PaginationQueryParams from @sudobility/mixr_types instead
  */
-export interface RecipeListParams {
-  limit?: number;
-  offset?: number;
-}
+export type RecipeListParams = PaginationQueryParams;
 
 /**
  * Configuration options for MixrClient

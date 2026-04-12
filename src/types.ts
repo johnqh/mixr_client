@@ -68,6 +68,9 @@ export type {
   DeleteRatingResponse,
   HealthResponse,
   VersionResponse,
+  SubscriptionStatusData,
+  SubscriptionStatusResponse,
+  MixrErrorResponse,
 } from '@sudobility/mixr_types';
 
 // Re-export constants
