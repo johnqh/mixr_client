@@ -1,5 +1,10 @@
 # MIXR Client
 
+> **Git policy — never auto-commit or auto-push.** Leave your work in the working tree.
+> Run `git commit`, `git push`, `gh pr create`, or `scripts/push_all.sh` **only when the user
+> explicitly asks in that turn**. Approval for an earlier change does not carry forward, and
+> finishing a task is not permission to commit it.
+
 React client library for MIXR API with TanStack Query hooks and Zustand state management.
 
 **npm**: `@sudobility/mixr_client` (restricted)
@@ -148,3 +153,7 @@ export function useRecipe(client: MixrClient, useRecipeStore: UseRecipeStore, re
   });
 }
 ```
+
+## Git Workflow
+
+- Do not use feature branches for code changes. Always stay on the current branch.
